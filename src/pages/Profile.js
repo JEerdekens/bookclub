@@ -8,6 +8,7 @@ import {
   sendPasswordResetEmail,
   updatePassword
 } from "firebase/auth";
+import imageCompression from "browser-image-compression";
 
 
 function Profile() {
@@ -108,25 +109,63 @@ function Profile() {
     const file = e.target.files[0];
     if (!file || !user) return;
 
+    const img = new Image();
     const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = reader.result;
+
+    reader.onload = () => {
+      img.src = reader.result;
+    };
+
+    img.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const maxSize = 200; // Resize to max 300px
+
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const base64String = canvas.toDataURL("image/jpeg", 0.8); // PNG format
+
+      console.log("Base64 length:", base64String.length);
 
       try {
         await updateDoc(doc(db, "users", user.uid), {
           photoBase64: base64String
         });
 
-        // Update local user state to reflect new image
         setUser((prev) => ({ ...prev, photoBase64: base64String }));
         setMessage("Profile image updated!");
       } catch (err) {
-        console.error("Image upload error:", err);
+        console.error("Image upload error:", err.message);
         setMessage("Failed to upload image.");
       }
     };
+
+    reader.onerror = () => {
+      console.error("FileReader error:", reader.error);
+      setMessage("Failed to read image file.");
+    };
+
     reader.readAsDataURL(file);
   };
+
 
 
 
