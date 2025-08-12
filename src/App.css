@@ -315,3 +315,19 @@ body, .form-control, .btn, .login-form-wrapper {
 
 
 
+.book-cover {
+  max-width: 200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.book-cover img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.book-cover img:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease-in-out;
+}

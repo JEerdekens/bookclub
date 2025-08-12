@@ -9,6 +9,10 @@ import {
   getDocs
 } from "firebase/firestore";
 import "../App.css";
+import { updateDoc } from "firebase/firestore"; // make sure this is imported
+
+
+
 
 function PrivateHome() {
   const [userData, setUserData] = useState(null);
@@ -64,6 +68,13 @@ function PrivateHome() {
       }
 
       const book = bookDoc.data();
+
+      if (!book.image) {
+        const placeholder = "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png";
+        await updateDoc(bookRef, { image: placeholder });
+        book.image = placeholder;
+      }
+
       setBookData(book);
 
       //Get progress
@@ -108,25 +119,40 @@ function PrivateHome() {
   return (
     <div className="container py-5">
       <div className="text-center mb-5">
-        <h2>Bookclub Home</h2>
-        <p className="lead">
+        <h2>Home</h2>
+        {/* <p className="lead">
           Browse your collection, track your reading, and get ready for the next book club.
-        </p>
+        </p> */}
       </div>
 
       <div className="row g-4">
         {/* Currently Reading */}
         <div className="col-md-6">
-          <div className="card shadow-sm p-3">
-            <h4>📚 Currently Reading</h4>
+          <div className=" p-3">
+            <h4>
+              <strong>
+                <i>{clubData?.name || "Your club"}</i>
+              </strong>{" "}
+              is currently Reading
+            </h4>
             {bookData ? (
               <>
-                <p><strong>{bookData.title}</strong> by {bookData.author}</p>
+                <div className="book-cover mb-3 center">
                 {bookData.image && (
-                  <img src={bookData.image} alt="Book cover" className="img-fluid mb-2" />
+                  <img
+                    src={
+                      bookData.image ||
+                      "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png"
+                    }
+                    alt="Book cover"
+                    className="img-fluid mb-2"
+                  />
+
                 )}
-                <p>Progress: {progress !== null ? `${progress}%` : "Not started"}</p>
-                <p>Rating: {rating !== null ? `${rating} ⭐` : "Not rated yet"}</p>
+                </div>
+                <p><strong>{bookData.title}</strong> by {bookData.author}</p>
+                <p>Your progress: {progress !== null ? `${progress}%` : "Not started"}</p>
+                <p>Your rating: {rating !== null ? `${rating} ⭐` : "Not rated yet"}</p>
                 <button className="btn btn-outline-success btn-sm">Update Progress</button>
               </>
             ) : (
@@ -142,8 +168,8 @@ function PrivateHome() {
             {clubData ? (
               <>
                 <p>Club: <strong>{clubData.name}</strong></p>
-                <p>Meeting: {formatDate(clubData.nextmeeting)}</p>
-                <p>Countdown: {getCountdown(clubData.nextmeeting)}</p>
+                <p>Meeting: {formatDate(clubData.nextMeeting)}</p>
+                <p>Countdown: {getCountdown(clubData.nextMeeting)}</p>
               </>
             ) : (
               <p>Loading club info...</p>
