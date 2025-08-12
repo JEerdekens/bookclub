@@ -74,7 +74,7 @@ const user = userCredential.user;
 
 
           <div className="logo-section mb-4">
-            <img src="/images/logo_round.png" alt="Book Logo" style={{ width: "250px" }} />
+            <img src="/bookclub/images/logo_round.png" alt="Book Logo" style={{ width: "250px" }} />
 
           </div>
 
@@ -90,7 +90,7 @@ const user = userCredential.user;
               onClick={handleGoogleSignIn}
             >
               <img
-                src="/images/google-icon.png"
+                src="/bookclub/images/google-icon.png"
                 alt="Google"
                 style={{ width: "20px", height: "20px" }}
               />
