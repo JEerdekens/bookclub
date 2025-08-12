@@ -1,13 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, provider } from "../firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from "firebase/auth";
 import '../App.css';
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 
 function PublicLanding() {
   const [email, setEmail] = useState("");
@@ -15,39 +19,79 @@ function PublicLanding() {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
+  const checkUsernameExists = async (uid) => {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    return userDoc.exists() && userDoc.data().username;
+  };
+
+  const [unverifiedUser, setUnverifiedUser] = useState(null);
 
 
 
   const handleEmailAuth = async (e) => {
-  e.preventDefault();
-  try {
-    if (isLogin) {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/home");
-    } else {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // eslint-disable-next-line no-unused-vars
-const user = userCredential.user;
-      // Check if username is set, if not redirect to ChooseUsername
-
-      // Redirect to username setup page
-      navigate("/choose-username");
-    }
-  } catch (err) {
-    alert(err.message);
-  }
-};
-
-
-  const handleGoogleSignIn = async () => {
+    e.preventDefault();
     try {
-      await signInWithPopup(auth, provider);
-      // alert("Signed in with Google!");
-      navigate("/home");
+      if (isLogin) {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        if (!user.emailVerified) {
+          setUnverifiedUser(user); // Save user for resend
+          alert("Please verify your email before continuing.");
+          return;
+        }
+
+
+        const hasUsername = await checkUsernameExists(user.uid);
+
+        if (hasUsername) {
+          navigate("/home");
+        } else {
+          navigate("/choose-username");
+        }
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await sendEmailVerification(user);
+        alert("Verification email sent! Please check your inbox before signing in.");
+        auth.signOut();
+      }
     } catch (err) {
       alert(err.message);
     }
   };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedUser) return;
+
+    try {
+      await sendEmailVerification(unverifiedUser);
+      alert("Verification email resent! Please check your inbox.");
+    } catch (err) {
+      alert("Error resending email: " + err.message);
+    }
+  };
+
+
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const hasUsername = await checkUsernameExists(user.uid);
+
+      if (hasUsername || user.displayName) {
+        navigate("/home");
+      } else {
+        navigate("/choose-username");
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
 
   const handleForgotPassword = async () => {
     if (!email) {
@@ -62,26 +106,16 @@ const user = userCredential.user;
     }
   };
 
-  
-
   return (
-    <div className={`landing-page   d-flex flex-column min-vh-100`}>
-   
-
-
+    <div className={`landing-page d-flex flex-column min-vh-100`}>
       <div className="container d-flex flex-grow-1 justify-content-center align-items-center">
         <div className="login-form-wrapper text-center animate-fade-in">
-
-
           <div className="logo-section mb-4">
             <img src="/bookclub/images/logo_round.png" alt="Book Logo" style={{ width: "250px" }} />
-
           </div>
 
           <div className="logo-section mb-4 mt-2">
-            {/* <h1 className="mt-2 display-5 fw-bold">THE BOOK CLUB</h1> */}
             <p className="lead fst-italic text-muted">Your next chapter starts here</p>
-
           </div>
 
           <div className="mt-4">
@@ -103,10 +137,6 @@ const user = userCredential.user;
             <span className="or-text px-3">OR</span>
             <hr className="flex-grow-1" />
           </div>
-
-
-
-          {/* <p className="sign-in mb-3">{isLogin ? "Sign In" : "Sign Up"}</p> */}
 
           <form onSubmit={handleEmailAuth}>
             <div className="mb-3">
@@ -130,11 +160,9 @@ const user = userCredential.user;
               />
             </div>
 
-
             <button type="submit" className="btn btn-bd-primary w-100 mb-2">
               {isLogin ? "Sign In" : "Sign Up"}
             </button>
-
 
             {isLogin && (
               <div className="mb-3 mt-1 text-end">
@@ -142,52 +170,44 @@ const user = userCredential.user;
                   type="button"
                   className="btn btn-link p-0"
                   onClick={handleForgotPassword}
-                  style={{ fontSize: "15px", color: "#b38349"  }}
+                  style={{ fontSize: "15px", color: "#b38349" }}
                 >
                   Forgot Password?
                 </button>
               </div>
             )}
 
-            <div
-              className="text-center mt-5"
-              style={{ fontSize: "14px", color: "#6c757d" }}
-            >
+            <div className="text-center mt-5" style={{ fontSize: "14px", color: "#6c757d" }}>
               {isLogin ? "Don't have an account?" : "Already have an account?"}
             </div>
 
-            {isLogin ? (
-              <button
-                type="button"
-                className="btn btn-link w-100"
-                style={{ fontSize: "14px", color: "#b38349" }}
+            <button
+              type="button"
+              className="btn btn-link w-100"
+              style={{ fontSize: "14px", color: "#b38349" }}
+              onClick={() => setIsLogin(!isLogin)}
+            >
+              {isLogin ? "Create account" : "Already have an account?"}
 
-                onClick={() => setIsLogin(false)}
-              >
-                Create account
-              </button>
-            ) : (
-              <button
-                 type="button"
-                className="btn btn-link w-100"
-                style={{ fontSize: "14px", color: "#b38349" }}
+              {unverifiedUser && (
+                <div className="mt-3 text-center">
+                  <button
+                    type="button"
+                    className="btn btn-outline-warning"
+                    onClick={handleResendVerification}
+                  >
+                    Resend Verification Email
+                  </button>
+                </div>
+              )}
 
-                onClick={() => setIsLogin(true)}
-              >
-                Already have an account?
-              </button>
-            )}
+            </button>
           </form>
-
-
         </div>
       </div>
 
-
       <footer className="bg-dark text-center text-light py-3 mt-auto">
-        <small>© 2025 XOXO Gossip Girl  </small>
-          {/* The Book Club. All rights reserved.  */}
-          
+        <small>© 2025 XOXO Gossip Girl</small>
       </footer>
     </div>
   );
