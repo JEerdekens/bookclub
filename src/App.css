@@ -305,3 +305,13 @@ body, .form-control, .btn, .login-form-wrapper {
   margin-bottom: 1rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+
+.profile-card {
+  max-width: 500px;
+  margin: auto;
+  background-color: #fdfdfd;
+  border-radius: 10px;
+}
+
+
+
