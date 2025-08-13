@@ -331,3 +331,13 @@ body, .form-control, .btn, .login-form-wrapper {
   transform: scale(1.02);
   transition: transform 0.2s ease-in-out;
 }
+.blurred-text {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+  margin: 0;
+}
+
+.spoiler-overlay {
+  position: relative;
+}
