@@ -12,6 +12,7 @@ import AddBook from "../pages/AddBook";
 import Profile from "../pages/Profile";
 import ChooseUsername from "../pages/ChooseUsername";
 import PrivateRoute from "./PrivateRoute";
+import BookPage from "../pages/BookPage";
 
 function AppWrapper() {
   const [user, setUser] = useState(null);
@@ -57,55 +58,62 @@ function AppWrapper() {
       {showNavbar && <Navbar user={user} />}
 
       <Routes>
-        {/* Redirect to /home if already logged in */}
-        <Route
-          path="/"
-          element={user ? <Navigate to="/home" replace /> : <PublicLanding />}
-        />
-        <Route path="/choose-username" element={<ChooseUsername />} />
+  <Route
+    path="/"
+    element={user ? <Navigate to="/home" replace /> : <PublicLanding />}
+  />
+  <Route path="/choose-username" element={<ChooseUsername />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/home"
-          element={
-            <PrivateRoute user={user}>
-              <PrivateHome />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/books"
-          element={
-            <PrivateRoute user={user}>
-              <BookList />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/books/:id"
-          element={
-            <PrivateRoute user={user}>
-              <BookDetails />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/add"
-          element={
-            <PrivateRoute user={user}>
-              <AddBook />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute user={user}>
-              <Profile />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
+  <Route
+    path="/home"
+    element={
+      <PrivateRoute user={user}>
+        <PrivateHome />
+      </PrivateRoute>
+    }
+  />
+  <Route
+    path="/books"
+    element={
+      <PrivateRoute user={user}>
+        <BookList />
+      </PrivateRoute>
+    }
+  />
+  <Route
+    path="/book/:bookId"
+    element={
+      <PrivateRoute user={user}>
+        <BookPage />
+      </PrivateRoute>
+    }
+  />
+  <Route
+    path="/books/:id"
+    element={
+      <PrivateRoute user={user}>
+        <BookDetails />
+      </PrivateRoute>
+    }
+  />
+  <Route
+    path="/add"
+    element={
+      <PrivateRoute user={user}>
+        <AddBook />
+      </PrivateRoute>
+    }
+  />
+  <Route
+    path="/profile"
+    element={
+      <PrivateRoute user={user}>
+        <Profile />
+      </PrivateRoute>
+    }
+  />
+</Routes>
+
     </>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import "../App.css";
 import { updateDoc } from "firebase/firestore"; // make sure this is imported
+import { Link } from "react-router-dom";
 
 
 
@@ -273,6 +274,7 @@ function PrivateHome() {
               <>
                 <div className="book-cover mb-3 center">
                   {bookData.image && (
+                    <Link to={`/book/${bookData.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                     <img
                       src={
                         bookData.image ||
@@ -281,7 +283,7 @@ function PrivateHome() {
                       alt="Book cover"
                       className="img-fluid mb-2"
                     />
-
+</Link>
                   )}
                 </div>
                 <p><strong>{bookData.title}</strong> by {bookData.author}</p>

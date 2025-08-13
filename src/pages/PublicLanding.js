@@ -13,6 +13,7 @@ import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 
+
 function PublicLanding() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
