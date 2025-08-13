@@ -163,8 +163,8 @@ function BookList() {
   })();
 
   return (
-    <div className="container mt-5">
-      <ul className="nav nav-tabs mb-4">
+    <div className="container mt-5 mb-5">
+      <ul className="nav nav-underline nav-justified mb-4">
         <li className="nav-item">
           <button
             className={`nav-link ${activeTab === "all" ? "active" : ""}`}

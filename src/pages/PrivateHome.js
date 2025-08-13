@@ -260,7 +260,7 @@ function PrivateHome() {
         </p> */}
       </div>
 
-      <div className="row g-4">
+      <div className="row g-4 mb-5">
         {/* Currently Reading */}
         <div className="col-md-6">
           <div className=" p-3">
