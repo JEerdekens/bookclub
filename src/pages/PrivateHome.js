@@ -25,6 +25,11 @@ function PrivateHome() {
   const [inputType, setInputType] = useState("percent"); // "percent" or "pages"
   const [inputValue, setInputValue] = useState({ percent: "", pagesRead: "", totalPages: "" });
 
+  const [showRatingForm, setShowRatingForm] = useState(false);
+  const [newRating, setNewRating] = useState(0);
+
+
+
 
 
   useEffect(() => {
@@ -164,6 +169,76 @@ function PrivateHome() {
     }
   };
 
+  const StarRating = ({ rating, onChange }) => {
+    const stars = [];
+
+    for (let i = 1; i <= 5; i++) {
+      const full = i <= rating;
+      const half = i - 0.5 === rating;
+
+      stars.push(
+        <span
+          key={i}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#f5c518" }}
+          onClick={() => onChange(i)}
+          onMouseEnter={() => onChange(i)}
+        >
+          {full ? "★" : half ? "⯨" : "☆"}
+        </span>
+      );
+      stars.push(
+        <span
+          key={`half-${i}`}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#f5c518" }}
+          onClick={() => onChange(i - 0.5)}
+          onMouseEnter={() => onChange(i - 0.5)}
+        >
+          {rating >= i - 0.5 && rating < i ? "⯨" : ""}
+        </span>
+      );
+    }
+
+    return <div>{stars}</div>;
+  };
+
+  const handleRatingSubmit = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !bookData || !newRating) return;
+
+    const ratingValue = parseFloat(newRating);
+    if (ratingValue < 0.5 || ratingValue > 5) {
+      console.warn("Rating must be between 0.5 and 5");
+      return;
+    }
+
+    try {
+      const ratingQuery = query(
+        collection(db, "ratings"),
+        where("user", "==", doc(db, "users", uid)),
+        where("book", "==", doc(db, "books", bookData.id))
+      );
+      const ratingSnap = await getDocs(ratingQuery);
+
+      if (!ratingSnap.empty) {
+        const ratingDocRef = ratingSnap.docs[0].ref;
+        await updateDoc(ratingDocRef, { rating: ratingValue });
+      } else {
+        await addDoc(collection(db, "ratings"), {
+          user: doc(db, "users", uid),
+          book: doc(db, "books", bookData.id),
+          rating: ratingValue
+        });
+      }
+
+      setRating(ratingValue);
+      setShowRatingForm(false);
+      setNewRating(0);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+    }
+  };
+
+
 
 
 
@@ -218,6 +293,33 @@ function PrivateHome() {
                 >
                   Update Progress
                 </button>
+
+                <button
+                  className="btn btn-outline-primary btn-sm ms-2"
+                  onClick={() => setShowRatingForm(true)}
+                >
+                  Rate this Book
+                </button>
+
+                {showRatingForm && (
+                  <div className="mt-3">
+                    <label>Give a rating (1–5):</label>
+                    <StarRating rating={newRating} onChange={setNewRating} />
+
+                    <button
+                      className="btn btn-sm btn-primary me-2"
+                      onClick={handleRatingSubmit}
+                    >
+                      Submit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => setShowRatingForm(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
 
               </>
             ) : (
@@ -291,6 +393,9 @@ function PrivateHome() {
             </button>
           </div>
         )}
+
+
+
 
 
 
