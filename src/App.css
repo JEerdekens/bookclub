@@ -341,3 +341,55 @@ body, .form-control, .btn, .login-form-wrapper {
 .spoiler-overlay {
   position: relative;
 }
+
+
+body {
+  background-color: #f8f3ed !important;
+  color: #746d67;
+}
+
+h2 {
+  font-family: 'Libre Baskerville', serif;
+   color: #746d67;
+}
+
+h3 {
+  font-family: 'Libre Baskerville', serif;
+   color: #746d67;
+   size: 0.9rem;
+   text-align: center;
+   
+}
+
+.container-bookshelf {
+  background: url('../public/images/Bookshelf.png') no-repeat center center;
+  background-size: contain;
+  padding: 3rem 2rem 12rem; /* extra bottom padding to show shelf */
+  border-radius: 10px;
+/*  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);*/
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #2c2c2c;
+  min-height: 500px;
+}
+
+
+.book-zone {
+  margin-bottom: 2rem; /* creates space between book and text */
+}
+
+.book-on-shelf {
+  max-height: 300px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border-radius: 8px;
+  transform: translateY(-20px);
+}
+
+.info-zone {
+  text-align: center;
+  max-width: 400px;
+}
+
+

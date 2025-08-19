@@ -171,7 +171,7 @@ function Profile() {
 
 
   return (
-    <div className="container mt-5">
+    <div className="container container-colored mt-5">
       <div>
         <h2 className="mb-4 text-center">Your account</h2>
         <div className="p-4 mb-4">
