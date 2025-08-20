@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "../App.css";
 import { auth, db } from "../firebase";
 import {
   doc,
@@ -10,8 +11,12 @@ import {
   addDoc,
   updateDoc
 } from "firebase/firestore";
-import "../App.css";
+
 import { Link } from "react-router-dom";
+import CircleMeter from "../components/CircleMeter";
+
+
+
 
 function PrivateHome() {
   const [userData, setUserData] = useState(null);
@@ -20,6 +25,7 @@ function PrivateHome() {
   const [progress, setProgress] = useState(null);
   const [rating, setRating] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
 
   const [showProgressForm, setShowProgressForm] = useState(false);
@@ -28,6 +34,19 @@ function PrivateHome() {
 
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [newRating, setNewRating] = useState(0);
+
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    setVh();
+    window.addEventListener('resize', setVh);
+    return () => window.removeEventListener('resize', setVh);
+  }, []);
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,6 +84,7 @@ function PrivateHome() {
 
       setBookData(book);
 
+      // Fetch user's progress
       const progressQuery = query(
         collection(db, "progress"),
         where("user", "==", doc(db, "users", uid)),
@@ -75,6 +95,7 @@ function PrivateHome() {
         setProgress(progressSnap.docs[0].data().progress);
       }
 
+      // Fetch user's rating
       const ratingQuery = query(
         collection(db, "ratings"),
         where("user", "==", doc(db, "users", uid)),
@@ -84,10 +105,46 @@ function PrivateHome() {
       if (!ratingSnap.empty) {
         setRating(ratingSnap.docs[0].data().rating);
       }
+
+      // 🔍 Fetch all ratings for this book
+      const allRatingsQuery = query(
+        collection(db, "ratings"),
+        where("book", "==", bookRef)
+      );
+      const allRatingsSnap = await getDocs(allRatingsQuery);
+      const allRatings = allRatingsSnap.docs.map(doc => doc.data().rating);
+      const avgRating = allRatings.length
+        ? allRatings.reduce((a, b) => a + b, 0) / allRatings.length
+        : null;
+
+      // 🔍 Fetch all progress entries for this book
+      const allProgressQuery = query(
+        collection(db, "progress"),
+        where("books", "==", bookRef)
+      );
+      const allProgressSnap = await getDocs(allProgressQuery);
+      const allProgress = allProgressSnap.docs.map(doc => doc.data().progress);
+      const avgProgress = allProgress.length
+        ? allProgress.reduce((a, b) => a + b, 0) / allProgress.length
+        : null;
+
+      // ✅ Store in clubData for display
+      setClubData(prev => ({
+        ...prev,
+        averageRating: avgRating,
+        averageProgress: avgProgress
+      }));
+
+      setIsLoading(false);
+
     };
+
 
     fetchData();
   }, []);
+
+
+
 
   const handleProgressUpdate = async () => {
     const uid = auth.currentUser?.uid;
@@ -173,7 +230,7 @@ function PrivateHome() {
       stars.push(
         <span
           key={i}
-          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#f5c518" }}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
           onClick={() => onChange(i)}
         >
           {full ? "★" : "☆"}
@@ -182,7 +239,7 @@ function PrivateHome() {
       stars.push(
         <span
           key={`half-${i}`}
-          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#f5c518" }}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
           onClick={() => onChange(i - 0.5)}
         >
           {rating >= i - 0.5 && rating < i ? "⯨" : ""}
@@ -191,6 +248,10 @@ function PrivateHome() {
     }
     return <div className="star-rating">{stars}</div>;
   };
+
+  const MemoizedMeter = React.memo(({ value }) => <CircleMeter value={value} />);
+
+
 
   return (
     <div className="container py-5">
@@ -202,7 +263,7 @@ function PrivateHome() {
         {bookData ? (<>
           <div className="container-bookshelf">
 
-            <div className="book-cover-zone mb-3 animate-fade-in">
+            <div className="book-cover-zone mb-2">
               <Link to={`/book/${bookData.id}`}>
                 <img
                   src={bookData.image}
@@ -212,107 +273,146 @@ function PrivateHome() {
               </Link>
             </div>
 
-            <div className="book-header d-flex align-items-center justify-content-between position-relative mb-3 mt-3">
+            <div className="book-header d-flex align-items-center justify-content-between position-relative mb-3 mt-5">
               {/* Progress on the left */}
-              <div className="progress-display m-0">{progress !== null ? `${progress}%` : "0%"}</div>
+              <div className="progress-display align-self-center">{progress !== null ? `${progress}%` : "0%"}</div>
 
               <div className="book-title-wrapper flex-grow-1 text-center">
                 <h4 className="book-title m-0"><strong>{bookData.title}</strong></h4>
+                <p className="text-muted">{bookData.author}</p>
               </div>
 
-              <div className="menu-icon-wrapper d-flex justify-content-end">
+              <div className="menu-icon-wrapper d-flex justify-content-end align-self-center">
                 <button className="menu-icon" onClick={() => setShowMenu(prev => !prev)} aria-label="Options">
                   <span className="three-dots">⋯</span>
                 </button>
                 {showMenu && (
                   <div className="popup-menu">
                     <button className="popup-item" onClick={() => { setShowRatingForm(true); setShowMenu(false); }}>
-                      ⭐ Rate this book
+                      Rate this book
                     </button>
                     <button className="popup-item" onClick={() => { setShowProgressForm(true); setShowMenu(false); }}>
-                      📈 Update progress
+                      Update progress
                     </button>
                   </div>
                 )}
               </div>
-
             </div>
+
+            <p className="rating-prompt mb-0">
+              {rating ? "Your rating:" : "Rate this book:"}
+            </p>
+            <StarRating rating={newRating || rating || 0} onChange={setNewRating} />
+
+
+
+
+
+            <div className="row  justify-content-center mt-5">
+              <div className="col-md-6 d-flex justify-content-center gap-5">
+
+                <div className="text-center d-flex flex-column align-items-center">
+                  <p>Club Progress</p>
+                  <CircleMeter
+                    value={clubData.averageProgress}
+                    className={isLoading ? "" : "loaded"}
+                  />
+
+
+                </div>
+
+
+
+                <div className="text-center d-flex flex-column align-items-center">
+                  <p>Club Rating</p>
+                  <CircleMeter value={clubData.averageRating * 20}
+                    className={isLoading ? "" : "loaded"}
+                  />
+
+
+                </div>
+
+              </div>
+            </div>
+
+
+
 
 
           </div>
 
-{/* Rating Popup */}
-{showRatingForm && (
-  <div className="popup-overlay">
-    <div className="popup-card">
-      <label>Give a rating (0.5–5):</label>
-      <StarRating rating={newRating} onChange={setNewRating} />
-      <div className="mt-2">
-        <button className="btn btn-sm btn-primary me-2" onClick={handleRatingSubmit}>Submit</button>
-        <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>Cancel</button>
-      </div>
-    </div>
-  </div>
-)}
+          {/* Rating Popup */}
+          {showRatingForm && (
+            <div className="popup-overlay">
+              <div className="popup-card">
+                <label>Give a rating (0–5):</label>
+                <StarRating rating={newRating} onChange={setNewRating} />
+                <div className="mt-2">
+                  <button className="btn btn-sm btn-bd-primary me-2" onClick={handleRatingSubmit}>Submit</button>
+                  <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
 
-{/* Progress Popup */}
-{showProgressForm && (
-  <div className="popup-overlay">
-    <div className="popup-card">
-      <label>Update your progress:</label>
-      <div className="mb-2">
-        <select
-          value={inputType}
-          onChange={(e) => setInputType(e.target.value)}
-          className="form-select form-select-sm"
-        >
-          <option value="percent">By Percentage</option>
-          <option value="pages">By Pages</option>
-        </select>
-      </div>
+          {/* Progress Popup */}
+          {showProgressForm && (
+            <div className="popup-overlay">
+              <div className="popup-card">
+                <label>Update your progress:</label>
+                <div className="mb-2 mt-2">
+                  <select
+                    value={inputType}
+                    onChange={(e) => setInputType(e.target.value)}
+                    className="form-select form-select-sm"
+                  >
+                    <option value="percent">By Percentage</option>
+                    <option value="pages">By Pages</option>
+                  </select>
+                </div>
 
-      {inputType === "percent" ? (
-        <input
-          type="number"
-          className="form-control form-control-sm mb-2"
-          placeholder="Enter % read"
-          value={inputValue.percent}
-          onChange={(e) =>
-            setInputValue({ ...inputValue, percent: e.target.value })
-          }
-          min="0"
-          max="100"
-        />
-      ) : (
-        <>
-          <input
-            type="number"
-            className="form-control form-control-sm mb-2"
-            placeholder="Pages you've read"
-            value={inputValue.pagesRead}
-            onChange={(e) =>
-              setInputValue({ ...inputValue, pagesRead: e.target.value })
-            }
-            min="0"
-          />
-          <input
-            type="number"
-            className="form-control form-control-sm mb-2"
-            placeholder="Total pages"
-            value={inputValue.totalPages}
-            onChange={(e) =>
-              setInputValue({ ...inputValue, totalPages: e.target.value })
-            }
-            min="1"
-          />
-        </>
-      )}
+                {inputType === "percent" ? (
+                  <input
+                    type="number"
+                    className="form-control form-control-sm mb-2"
+                    placeholder="Enter % read"
+                    value={inputValue.percent}
+                    onChange={(e) =>
+                      setInputValue({ ...inputValue, percent: e.target.value })
+                    }
+                    min="0"
+                    max="100"
+                  />
+                ) : (
+                  <>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm mb-2"
+                      placeholder="Pages you've read"
+                      value={inputValue.pagesRead}
+                      onChange={(e) =>
+                        setInputValue({ ...inputValue, pagesRead: e.target.value })
+                      }
+                      min="0"
+                    />
+                    <input
+                      type="number"
+                      className="form-control form-control-sm mb-2"
+                      placeholder="Total pages"
+                      value={inputValue.totalPages}
+                      onChange={(e) =>
+                        setInputValue({ ...inputValue, totalPages: e.target.value })
+                      }
+                      min="1"
+                    />
+                  </>
+                )}
 
-      <button className="btn btn-sm btn-primary me-2" onClick={handleProgressUpdate}>Save</button>
-      <button className="btn btn-sm btn-secondary" onClick={() => setShowProgressForm(false)}>Cancel</button>
-    </div>
-  </div>
-)}
+                <button className="btn btn-sm btn-bd-primary me-2" onClick={handleProgressUpdate}>Save</button>
+                <button className="btn btn-sm btn-secondary" onClick={() => setShowProgressForm(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
 
 
 

@@ -7,15 +7,10 @@
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -202,20 +197,10 @@ footer {
 }
 
 
-/* Smooth transitions */
-body, .form-control, .btn, .login-form-wrapper {
-  transition: all 0.3s ease-in-out;
-}
 
-/* Fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 
-.animate-fade-in {
-  animation: fadeIn 0.8s ease forwards;
-}
+
+
 
 
 .landing-page.light-theme {
@@ -364,7 +349,7 @@ h3 {
 .container-bookshelf {
   background: url('../public/images/Bookshelf.png') no-repeat center center;
   background-size: contain;
-  padding: 3rem 2rem 19rem; /* extra bottom padding to show shelf */
+  padding: 3rem 1rem 0rem; /* extra bottom padding to show shelf */
   border-radius: 10px;
 /*  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);*/
   display: flex;
@@ -373,6 +358,9 @@ h3 {
   flex-direction: column;
   color: #2c2c2c;
   min-height: 500px;
+  transform: translateZ(0);
+  will-change: transform;
+  z-index: 1;
 }
 
 
@@ -435,9 +423,7 @@ h3 {
   color: #3e2723;
 }
 
-.book-cover-zone {
-  animation: fadeIn 0.8s ease forwards;
-}
+
 
 .book-header {
   display: flex;
@@ -451,8 +437,9 @@ h3 {
 
 .book-title {
   font-size: 1.25rem;
-  color: #3e2723;
+  color: #746d67;
   margin: 0;
+  font-family: 'Libre Baskerville', serif;
 }
 
 .menu-icon-wrapper {
@@ -471,10 +458,7 @@ h3 {
 
 .three-dots {
   font-size: 1.8rem;
-
   padding: 0.2rem 0.5rem;
-
-
 }
 
 .popup-menu {
@@ -525,4 +509,62 @@ h3 {
   border-radius: 8px;
   width: 300px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.circle-meter {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.circle-meter.loaded {
+  opacity: 1; /* ✅ This makes it visible */
+  transform: scale(1);
+  position: relative;
+  width: 80px;
+  height: 80px;
+  text-align: center;
+  z-index: 10;
+}
+
+
+.circle-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.circle-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #3e2723;
+}
+
+.circle-text {
+  font-size: 0.85rem;
+  color: #3e2723;
+  margin-top: 2px;
+}
+
+
+:root {
+  --vh: 100vh;
+}
+
+body {
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.meter-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: #f0e8dc;
+  border-radius: 50%;
 }
