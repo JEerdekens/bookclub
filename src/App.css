@@ -385,6 +385,7 @@ h3 {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   border-radius: 8px;
   transform: translateY(-20px);
+  
 }
 
 .info-zone {
@@ -503,4 +504,25 @@ h3 {
 
 .popup-item:hover {
   background-color: #f0e8dc;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* dimmed background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.popup-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }

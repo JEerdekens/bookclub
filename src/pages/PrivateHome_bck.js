@@ -198,131 +198,155 @@ function PrivateHome() {
         <h2><strong>Currently Reading</strong></h2>
       </div>
 
-      <div className="text-center mb-4">
-        {bookData ? (<>
-          <div className="container-bookshelf">
+      <div className="row g-4">
+        <div className="col-md-6 container-bookshelf">
+          <div className="p-3 text-center">
+            {bookData ? (
+              <>
+                <div className="book-cover-zone mb-3 animate-fade-in">
+                  <Link to={`/book/${bookData.id}`}>
+                    <img
+                      src={bookData.image}
+                      alt="Book cover"
+                      className="img-fluid book-on-shelf"
+                    />
+                  </Link>
+                </div>
 
-            <div className="book-cover-zone mb-3 animate-fade-in">
-              <Link to={`/book/${bookData.id}`}>
-                <img
-                  src={bookData.image}
-                  alt="Book cover"
-                  className="img-fluid book-on-shelf"
-                />
-              </Link>
-            </div>
 
-            <div className="book-header d-flex align-items-center justify-content-between position-relative mb-3 mt-3">
-              {/* Progress on the left */}
-              <div className="progress-display m-0">{progress !== null ? `${progress}%` : "0%"}</div>
+<div className="book-header d-flex align-items-center justify-content-between position-relative mb-3">
+  {/* Progress on the left */}
+  <div className="progress-display m-0">{progress !== null ? `${progress}%` : "0%"}</div>
 
-              <div className="book-title-wrapper flex-grow-1 text-center">
-                <h4 className="book-title m-0"><strong>{bookData.title}</strong></h4>
-              </div>
+  {/* Title centered */}
+  <div className="flex-grow-1 text-center">
+    <h4 className="book-title m-0 ms-3 me-3"><strong>{bookData.title}</strong></h4>
+  </div>
 
-              <div className="menu-icon-wrapper d-flex justify-content-end">
-                <button className="menu-icon" onClick={() => setShowMenu(prev => !prev)} aria-label="Options">
-                  <span className="three-dots">⋯</span>
-                </button>
-                {showMenu && (
-                  <div className="popup-menu">
-                    <button className="popup-item" onClick={() => { setShowRatingForm(true); setShowMenu(false); }}>
-                      ⭐ Rate this book
+  {/* Three-dot icon on the right */}
+  <div className="menu-icon-wrapper">
+    <button
+      className="menu-icon"
+      onClick={() => setShowMenu(prev => !prev)}
+      aria-label="Options"
+    >
+      <span className="three-dots">⋯</span>
+    </button>
+
+    {/* Popup menu */}
+    {showMenu && (
+      <div className="popup-menu">
+        <button className="popup-item" onClick={() => { setShowRatingForm(true); setShowMenu(false); }}>
+          ⭐ Rate this book
+        </button>
+        <button className="popup-item" onClick={() => { setShowProgressForm(true); setShowMenu(false); }}>
+          📈 Update progress
+        </button>
+      </div>
+    )}
+  </div>
+</div>
+
+
+               {/*  <p className="progress-display">{progress !== null ? `${progress}%` : "0%"}</p>
+                <h4 className="mt-2"><strong>{bookData.title}</strong></h4>
+                <p className="text-muted">{bookData.author}</p>
+
+                <p className="rating-prompt">Rate this book</p>
+                <StarRating rating={newRating || rating || 0} onChange={setNewRating} />
+
+                <div className="dropdown mt-3">
+                  <button className="btn btn-outline-dark dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+                    ☰
+                  </button>
+                  <ul className="dropdown-menu">
+                    <li><button className="dropdown-item" onClick={() => setShowRatingForm(true)}>⭐ Rate</button></li>
+                    <li><button className="dropdown-item" onClick={() => setShowProgressForm(true)}>📈 Update progress</button></li>
+                  </ul>
+                </div> */}
+
+                {showRatingForm && (
+                  <div className="mt-3">
+                    <label>Give a rating (0.5–5):</label>
+                    <StarRating rating={newRating} onChange={setNewRating} />
+                    <div className="mt-2">
+                      <button className="btn btn-sm btn-primary me-2" onClick={handleRatingSubmit}>Submit</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {showProgressForm && (
+                  <div className="mt-3">
+                                        <label>Update your progress:</label>
+                    <div className="mb-2">
+                      <select
+                        value={inputType}
+                        onChange={(e) => setInputType(e.target.value)}
+                        className="form-select form-select-sm"
+                      >
+                        <option value="percent">By Percentage</option>
+                        <option value="pages">By Pages</option>
+                      </select>
+                    </div>
+
+                    {inputType === "percent" ? (
+                      <input
+                        type="number"
+                        className="form-control form-control-sm mb-2"
+                        placeholder="Enter % read"
+                        value={inputValue.percent}
+                        onChange={(e) =>
+                          setInputValue({ ...inputValue, percent: e.target.value })
+                        }
+                        min="0"
+                        max="100"
+                      />
+                    ) : (
+                      <>
+                        <input
+                          type="number"
+                          className="form-control form-control-sm mb-2"
+                          placeholder="Pages you've read"
+                          value={inputValue.pagesRead}
+                          onChange={(e) =>
+                            setInputValue({ ...inputValue, pagesRead: e.target.value })
+                          }
+                          min="0"
+                        />
+                        <input
+                          type="number"
+                          className="form-control form-control-sm mb-2"
+                          placeholder="Total pages (e.g. your edition)"
+                          value={inputValue.totalPages}
+                          onChange={(e) =>
+                            setInputValue({ ...inputValue, totalPages: e.target.value })
+                          }
+                          min="1"
+                        />
+                      </>
+                    )}
+
+                    <button
+                      className="btn btn-sm btn-primary me-2"
+                      onClick={handleProgressUpdate}
+                    >
+                      Save
                     </button>
-                    <button className="popup-item" onClick={() => { setShowProgressForm(true); setShowMenu(false); }}>
-                      📈 Update progress
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => setShowProgressForm(false)}
+                    >
+                      Cancel
                     </button>
                   </div>
                 )}
-              </div>
-
-            </div>
-
-
+              </>
+            ) : (
+              <p>Loading book info...</p>
+            )}
           </div>
-
-{/* Rating Popup */}
-{showRatingForm && (
-  <div className="popup-overlay">
-    <div className="popup-card">
-      <label>Give a rating (0.5–5):</label>
-      <StarRating rating={newRating} onChange={setNewRating} />
-      <div className="mt-2">
-        <button className="btn btn-sm btn-primary me-2" onClick={handleRatingSubmit}>Submit</button>
-        <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>Cancel</button>
-      </div>
-    </div>
-  </div>
-)}
-
-{/* Progress Popup */}
-{showProgressForm && (
-  <div className="popup-overlay">
-    <div className="popup-card">
-      <label>Update your progress:</label>
-      <div className="mb-2">
-        <select
-          value={inputType}
-          onChange={(e) => setInputType(e.target.value)}
-          className="form-select form-select-sm"
-        >
-          <option value="percent">By Percentage</option>
-          <option value="pages">By Pages</option>
-        </select>
-      </div>
-
-      {inputType === "percent" ? (
-        <input
-          type="number"
-          className="form-control form-control-sm mb-2"
-          placeholder="Enter % read"
-          value={inputValue.percent}
-          onChange={(e) =>
-            setInputValue({ ...inputValue, percent: e.target.value })
-          }
-          min="0"
-          max="100"
-        />
-      ) : (
-        <>
-          <input
-            type="number"
-            className="form-control form-control-sm mb-2"
-            placeholder="Pages you've read"
-            value={inputValue.pagesRead}
-            onChange={(e) =>
-              setInputValue({ ...inputValue, pagesRead: e.target.value })
-            }
-            min="0"
-          />
-          <input
-            type="number"
-            className="form-control form-control-sm mb-2"
-            placeholder="Total pages"
-            value={inputValue.totalPages}
-            onChange={(e) =>
-              setInputValue({ ...inputValue, totalPages: e.target.value })
-            }
-            min="1"
-          />
-        </>
-      )}
-
-      <button className="btn btn-sm btn-primary me-2" onClick={handleProgressUpdate}>Save</button>
-      <button className="btn btn-sm btn-secondary" onClick={() => setShowProgressForm(false)}>Cancel</button>
-    </div>
-  </div>
-)}
-
-
-
-
-
-        </>
-        ) : (
-          <p>Loading book info...</p>
-        )}
-
+        </div>
       </div>
     </div>
   );
