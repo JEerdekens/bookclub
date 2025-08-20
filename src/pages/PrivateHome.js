@@ -253,82 +253,77 @@ function PrivateHome() {
 
   return (
     <div className="container py-5">
-      <div className="text-center mb-5">
-        <h2>Home</h2>
+      <div className="text-center">
+        <h2> <strong>Currently Reading</strong></h2>
         {/* <p className="lead">
           Browse your collection, track your reading, and get ready for the next book club.
         </p> */}
       </div>
 
-      <div className="row g-4 mb-5">
+      <div className="row g-4">
         {/* Currently Reading */}
-        <div className="col-md-6">
-          <div className=" p-3">
-            <h4>
-              <strong>
-                <i>{clubData?.name || "Your club"}</i>
-              </strong>{" "}
-              is currently Reading
-            </h4>
-            {bookData ? (
-              <>
-                <div className="book-cover mb-3 center">
-                  {bookData.image && (
-                    <Link to={`/book/${bookData.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                    <img
-                      src={
-                        bookData.image ||
-                        "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png"
-                      }
-                      alt="Book cover"
-                      className="img-fluid mb-2"
-                    />
-</Link>
-                  )}
-                </div>
-                <p><strong>{bookData.title}</strong> by {bookData.author}</p>
-                <p>Your progress: {progress !== null ? `${progress}%` : "Not started"}</p>
-                <p>Your rating: {rating !== null ? `${rating} ⭐` : "Not rated yet"}</p>
-                <button
-                  className="btn btn-outline-success btn-sm"
-                  onClick={() => setShowProgressForm(true)}
-                >
-                  Update Progress
-                </button>
-
-                <button
-                  className="btn btn-outline-primary btn-sm ms-2"
-                  onClick={() => setShowRatingForm(true)}
-                >
-                  Rate this Book
-                </button>
-
-                {showRatingForm && (
-                  <div className="mt-3">
-                    <label>Give a rating (1–5):</label>
-                    <StarRating rating={newRating} onChange={setNewRating} />
-
-                    <button
-                      className="btn btn-sm btn-primary me-2"
-                      onClick={handleRatingSubmit}
-                    >
-                      Submit
-                    </button>
-                    <button
-                      className="btn btn-sm btn-secondary"
-                      onClick={() => setShowRatingForm(false)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-
-              </>
-            ) : (
-              <p>Loading book info...</p>
-            )}
-          </div>
+        
+       <div className="col-md-6 container-bookshelf">
+  <div className="p-3 text-center">
+    {bookData ? (
+      <>
+        <div className="book-cover-zone mb-4">
+          <Link to={`/book/${bookData.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <img
+              src={
+                bookData.image ||
+                "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png"
+              }
+              alt="Book cover"
+              className="img-fluid"
+              style={{
+                maxHeight: "300px",
+                marginBottom: "1rem",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                borderRadius: "8px",
+              }}
+            />
+          </Link>
         </div>
+
+        <h3 className="mt-5"><strong>{bookData.title}</strong></h3>
+        <p className="text-center">{bookData.author}</p>
+       
+        <p>Your progress: {progress !== null ? `${progress}%` : "Not started"}</p>
+        <p>Your rating: {rating !== null ? `${rating} ⭐` : "Not rated yet"}</p>
+
+        <div className="d-flex justify-content-center gap-2 mt-2">
+          <button className="btn btn-outline-success btn-sm" onClick={() => setShowProgressForm(true)}>
+            Update Progress
+          </button>
+          <button className="btn btn-outline-primary btn-sm" onClick={() => setShowRatingForm(true)}>
+            Rate this Book
+          </button>
+        </div>
+
+        {showRatingForm && (
+          <div className="mt-3">
+            <label>Give a rating (1–5):</label>
+            <StarRating rating={newRating} onChange={setNewRating} />
+            <div className="mt-2">
+              <button className="btn btn-sm btn-primary me-2" onClick={handleRatingSubmit}>
+                Submit
+              </button>
+              <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </>
+    ) : (
+      <p>Loading book info...</p>
+    )}
+  </div>
+</div>
+
+
+
         {showProgressForm && (
           <div className="mt-3">
             <label>Update your progress:</label>
