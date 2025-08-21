@@ -594,7 +594,7 @@ useEffect(() => {
         data-bs-dismiss="offcanvas"
         style={{ cursor: "pointer" }}
       >
-        All Books
+        <i class="bi bi-book"></i>  All Books
       </div>
       <hr />
 
@@ -604,7 +604,7 @@ useEffect(() => {
         data-bs-dismiss="offcanvas"
         style={{ cursor: "pointer" }}
       >
-        Want to Read
+        <i class="bi bi-bookmark"></i> Want to Read
       </div>
       <hr />
         <div
@@ -613,7 +613,7 @@ useEffect(() => {
         data-bs-dismiss="offcanvas"
         style={{ cursor: "pointer" }}
       >
-        Read
+        <i class="bi bi-bookmark-check"></i> Read
       </div>
      <hr />
       <div
@@ -622,7 +622,7 @@ useEffect(() => {
         data-bs-dismiss="offcanvas"
         style={{ cursor: "pointer" }}
       >
-        Bookclub Want to Read
+        <i class="bi bi-bookmarks"></i> Bookclub Want to Read  
       </div>
       <hr />
 
@@ -632,7 +632,7 @@ useEffect(() => {
         data-bs-dismiss="offcanvas"
         style={{ cursor: "pointer" }}
       >
-        Bookclub Picks
+        <i class="bi bi-bookmark-star"></i> Bookclub Picks
       </div>
       <hr />
 
@@ -642,14 +642,14 @@ useEffect(() => {
         data-bs-dismiss="offcanvas"
         style={{ cursor: "pointer" }}
       >
-        Bookclub past books
+        <i class="bi bi-bookmark-heart"></i> Bookclub past books
       </div>
       <hr />
 
 
       <div className="mt-4">
 
-        <Link to="/add" className="text-decoration-none text-success d-flex align-items-center gap-2">
+        <Link to="/add" className="text-decoration-none text-bd-primary d-flex align-items-center gap-2">
           <i className="bi bi-plus-circle"></i> Add Book
         </Link>
       </div>
