@@ -22,6 +22,14 @@ function BookList() {
   const [showMenu, setShowMenu] = useState(false);
   const [popupDirections, setPopupDirections] = useState({});
 
+  const [showRatingForm, setShowRatingForm] = useState(false);
+  const [showProgressForm, setShowProgressForm] = useState(false);
+  const [newRating, setNewRating] = useState(0);
+  const [inputType, setInputType] = useState("percent");
+  const [inputValue, setInputValue] = useState({ percent: "", pagesRead: "", totalPages: "" });
+  const [activeBookId, setActiveBookId] = useState(null); // Tracks which book is being rated or updated
+
+
   const cardRefs = useRef({});
   const popupRefs = useRef({});
   const lastClickedRef = useRef(null);
@@ -148,7 +156,7 @@ function BookList() {
       });
     }
 
-    alert("Marked as read!");
+    /* alert("Marked as read!"); */
   };
 
   const handleWantToRead = async (bookId) => {
@@ -177,19 +185,48 @@ function BookList() {
       const docId = existingSnap.docs[0].id;
       await deleteDoc(doc(db, "wantToRead", docId));
       setMarkedWantToReadIds(prev => prev.filter(id => id !== bookId));
-      alert("Removed from your Want to Read list.");
+      /* alert("Removed from your Want to Read list."); */
     }
   };
 
-  const handleRate = async (bookId) => {
-    // You can expand this with a modal or rating logic later
-    alert(`You rated book with ID: ${bookId}`);
+  const handleRate = (bookId) => {
+    setActiveBookId(bookId);
+    setShowRatingForm(true);
+    setShowMenu(null);
   };
 
-  const handleUpdateProgress = async (bookId) => {
-    // You can expand this with a progress input or modal later
-    alert(`Updating progress for book ID: ${bookId}`);
+  const handleUpdateProgress = (bookId) => {
+    setActiveBookId(bookId);
+    setShowProgressForm(true);
+    setShowMenu(null);
   };
+  const StarRating = ({ rating, onChange }) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      const full = i <= rating;
+      const half = i - 0.5 === rating;
+      stars.push(
+        <span
+          key={i}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
+          onClick={() => onChange(i)}
+        >
+          {full ? "★" : "☆"}
+        </span>
+      );
+      stars.push(
+        <span
+          key={`half-${i}`}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
+          onClick={() => onChange(i - 0.5)}
+        >
+          {rating >= i - 0.5 && rating < i ? "⯨" : ""}
+        </span>
+      );
+    }
+    return <div className="star-rating">{stars}</div>;
+  };
+
 
   const [popupDirection, setPopupDirection] = useState("right");
   const cardRef = useRef(null);
@@ -207,6 +244,82 @@ function BookList() {
       }
     }
   }, [showMenu]);
+
+  const handleProgressUpdate = async () => {
+  const uid = auth.currentUser?.uid;
+  if (!uid || !activeBookId) return;
+
+  let newProgress;
+
+  if (inputType === "percent") {
+    const percent = parseFloat(inputValue.percent);
+    newProgress = Math.min(100, Math.max(0, percent));
+  } else {
+    const pagesRead = parseInt(inputValue.pagesRead);
+    const totalPages = parseInt(inputValue.totalPages);
+    if (!pagesRead || !totalPages || totalPages <= 0) return;
+    newProgress = Math.round((pagesRead / totalPages) * 100);
+    newProgress = Math.min(100, Math.max(0, newProgress));
+  }
+
+  try {
+    const progressQuery = query(
+      collection(db, "progress"),
+      where("user", "==", doc(db, "users", uid)),
+      where("books", "==", doc(db, "books", activeBookId))
+    );
+    const progressSnap = await getDocs(progressQuery);
+
+    if (!progressSnap.empty) {
+      await updateDoc(progressSnap.docs[0].ref, { progress: newProgress });
+    } else {
+      await addDoc(collection(db, "progress"), {
+        user: doc(db, "users", uid),
+        books: doc(db, "books", activeBookId),
+        progress: newProgress
+      });
+    }
+
+    setShowProgressForm(false);
+    setInputValue({ percent: "", pagesRead: "", totalPages: "" });
+  } catch (error) {
+    console.error("Error updating progress:", error);
+  }
+};
+
+   const handleRatingSubmit = async () => {
+  const uid = auth.currentUser?.uid;
+  if (!uid || !activeBookId || !newRating) return;
+
+  const ratingValue = parseFloat(newRating);
+  if (ratingValue < 0.5 || ratingValue > 5) return;
+
+  try {
+    const ratingQuery = query(
+      collection(db, "ratings"),
+      where("user", "==", doc(db, "users", uid)),
+      where("book", "==", doc(db, "books", activeBookId))
+    );
+    const ratingSnap = await getDocs(ratingQuery);
+
+    if (!ratingSnap.empty) {
+      await updateDoc(ratingSnap.docs[0].ref, { rating: ratingValue });
+    } else {
+      await addDoc(collection(db, "ratings"), {
+        user: doc(db, "users", uid),
+        book: doc(db, "books", activeBookId),
+        rating: ratingValue
+      });
+    }
+
+    setShowRatingForm(false);
+    setNewRating(0);
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+  }
+};
+
+
 
 
   const handleShowMenu = (bookId) => {
@@ -230,13 +343,19 @@ function BookList() {
 
 
   const filteredBooks = (() => {
-    if (activeTab === "wantToRead") return wantToReadBooks;
-    if (activeTab === "clubInterest") return clubInterestBooks;
-    return books.filter(book =>
+    const source =
+      activeTab === "wantToRead"
+        ? wantToReadBooks
+        : activeTab === "clubInterest"
+          ? clubInterestBooks
+          : books;
+
+    return source.filter(book =>
       book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       book.author.toLowerCase().includes(searchTerm.toLowerCase())
     );
   })();
+
 
 
 
@@ -285,15 +404,16 @@ function BookList() {
       </div>
 
 
-      {activeTab === "all" && (
-        <input
-          type="text"
-          className="form-control mb-4"
-          placeholder="Search by title or author..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      )}
+
+      <input
+        type="text"
+        className="form-control mb-4"
+        placeholder="Search by title or author..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+
+
       <div className="d-flex flex-wrap gap-4 justify-content-start">
         {filteredBooks.map(book => {
           if (!cardRefs.current[book.id]) {
@@ -303,6 +423,7 @@ function BookList() {
           if (!popupRefs.current[book.id]) {
             popupRefs.current[book.id] = React.createRef();
           }
+
 
           return (
             <div
@@ -371,12 +492,13 @@ function BookList() {
 
 
 
-                    <button className="popup-item" onClick={() => { handleRate(book.id); setShowMenu(null); }}>
+                    <button className="popup-item" onClick={() => handleRate(book.id)}>
                       Rate
                     </button>
-                    <button className="popup-item" onClick={() => { handleUpdateProgress(book.id); setShowMenu(null); }}>
+                    <button className="popup-item" onClick={() => handleUpdateProgress(book.id)}>
                       Update progress
                     </button>
+
                     <button className="popup-item" onClick={() => { handleMarkAsRead(book.id); setShowMenu(null); }}>
                       Mark as finished
                     </button>
@@ -384,8 +506,82 @@ function BookList() {
                 )}
               </div>
             </div>
+
+
           );
         })}
+
+        {showRatingForm && activeBookId && (
+           <div className="popup-overlay">
+              <div className="popup-card">
+                <label>Give a rating (0–5):</label>
+                <StarRating rating={newRating} onChange={setNewRating} />
+                <div className="mt-2">
+                  <button className="btn btn-sm btn-bd-primary me-2" onClick={handleRatingSubmit}>Submit</button>
+                  <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>Cancel</button>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {showProgressForm && activeBookId && (
+          <div className="popup-overlay">
+              <div className="popup-card">
+                <label>Update your progress:</label>
+                <div className="mb-2 mt-2">
+                  <select
+                    value={inputType}
+                    onChange={(e) => setInputType(e.target.value)}
+                    className="form-select form-select-sm"
+                  >
+                    <option value="percent">By Percentage</option>
+                    <option value="pages">By Pages</option>
+                  </select>
+                </div>
+
+                {inputType === "percent" ? (
+                  <input
+                    type="number"
+                    className="form-control form-control-sm mb-2"
+                    placeholder="Enter % read"
+                    value={inputValue.percent}
+                    onChange={(e) =>
+                      setInputValue({ ...inputValue, percent: e.target.value })
+                    }
+                    min="0"
+                    max="100"
+                  />
+                ) : (
+                  <>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm mb-2"
+                      placeholder="Pages you've read"
+                      value={inputValue.pagesRead}
+                      onChange={(e) =>
+                        setInputValue({ ...inputValue, pagesRead: e.target.value })
+                      }
+                      min="0"
+                    />
+                    <input
+                      type="number"
+                      className="form-control form-control-sm mb-2"
+                      placeholder="Total pages"
+                      value={inputValue.totalPages}
+                      onChange={(e) =>
+                        setInputValue({ ...inputValue, totalPages: e.target.value })
+                      }
+                      min="1"
+                    />
+                  </>
+                )}
+
+                <button className="btn btn-sm btn-bd-primary me-2" onClick={handleProgressUpdate}>Save</button>
+                <button className="btn btn-sm btn-secondary" onClick={() => setShowProgressForm(false)}>Cancel</button>
+              </div>
+            </div>
+        )}
+
 
 
 
