@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { db, auth } from "../firebase";
 import {
   collection,
@@ -19,7 +19,35 @@ function BookList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [markedWantToReadIds, setMarkedWantToReadIds] = useState([]);
+  const [showMenu, setShowMenu] = useState(false);
+  const [popupDirections, setPopupDirections] = useState({});
 
+  const cardRefs = useRef({});
+  const popupRefs = useRef({});
+  const lastClickedRef = useRef(null);
+
+
+
+
+
+
+
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    const popupRef = popupRefs.current[showMenu];
+    const clickedInsidePopup = popupRef?.current?.contains(event.target);
+    const clickedButton = lastClickedRef.current === event.target;
+
+    if (!clickedInsidePopup && !clickedButton) {
+      setShowMenu(null);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [showMenu]);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -94,6 +122,7 @@ function BookList() {
     if (activeTab === "clubInterest") fetchBookclubInterest();
   }, [activeTab]);
 
+
   const handleMarkAsRead = async (bookId) => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
@@ -152,6 +181,53 @@ function BookList() {
     }
   };
 
+  const handleRate = async (bookId) => {
+    // You can expand this with a modal or rating logic later
+    alert(`You rated book with ID: ${bookId}`);
+  };
+
+  const handleUpdateProgress = async (bookId) => {
+    // You can expand this with a progress input or modal later
+    alert(`Updating progress for book ID: ${bookId}`);
+  };
+
+  const [popupDirection, setPopupDirection] = useState("right");
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const screenWidth = window.innerWidth;
+      if (rect.left < 150) {
+        setPopupDirection("right");
+      } else if (screenWidth - rect.right < 150) {
+        setPopupDirection("left");
+      } else {
+        setPopupDirection("right");
+      }
+    }
+  }, [showMenu]);
+
+  
+const handleShowMenu = (bookId) => {
+  setTimeout(() => {
+    setShowMenu(prev => (prev === bookId ? null : bookId));
+
+    const ref = cardRefs.current[bookId];
+    if (ref?.current) {
+      const rect = ref.current.getBoundingClientRect();
+      const screenWidth = window.innerWidth;
+      const direction =
+        rect.left < 150 ? "right" :
+        screenWidth - rect.right < 150 ? "left" :
+        "right";
+
+      setPopupDirections(prev => ({ ...prev, [bookId]: direction }));
+    }
+  }, 0); // Let the event bubble finish before toggling
+};
+
+
 
   const filteredBooks = (() => {
     if (activeTab === "wantToRead") return wantToReadBooks;
@@ -161,6 +237,10 @@ function BookList() {
       book.author.toLowerCase().includes(searchTerm.toLowerCase())
     );
   })();
+
+
+
+
 
   return (
     <div className="container mt-5 mb-5">
@@ -214,50 +294,92 @@ function BookList() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       )}
+<div className="d-flex flex-wrap gap-4 justify-content-start">
+    {filteredBooks.map(book => {
+  if (!cardRefs.current[book.id]) {
+    cardRefs.current[book.id] = React.createRef();
+  }
 
-      <div className="row">
-        {filteredBooks.map(book => (
-          <div key={book.id} className="col-md-4 mb-4">
-            <div className="card h-100">
-              <Link to={`/book/${book.id}`} className="text-decoration-none text-dark">
-                <img
-                  src={
-                    book.image ||
-                    "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png"
-                  }
-                  alt="Book cover"
-                  className="card-img-top"
-                  style={{ height: "250px", objectFit: "cover" }}
-                />
-                <div className="card-body">
-                  <h5 className="card-title">{book.title}</h5>
-                  <p className="card-text">by {book.author}</p>
-                </div>
-              </Link>
-              <div className="card-footer bg-white border-top-0">
-                <button
-                  className="btn btn-sm btn-outline-primary w-100"
-                  onClick={() => handleMarkAsRead(book.id)}
-                >
-                  I have read this
-                </button>
-                <button
-                  className={`btn btn-sm w-100 mt-2 ${markedWantToReadIds.includes(book.id)
-                      ? "btn-outline-danger"
-                      : "btn-outline-secondary"
-                    }`}
-                  onClick={() => handleWantToRead(book.id)}
-                >
-                  {markedWantToReadIds.includes(book.id)
-                    ? "Remove from Want to Read"
-                    : "Want to Read"}
-                </button>
+  if (!popupRefs.current[book.id]) {
+    popupRefs.current[book.id] = React.createRef();
+  }
 
-              </div>
+  return (
+    <div
+      key={book.id}
+      ref={cardRefs.current[book.id]}
+      className="book-card p-2 position-relative"
+      style={{ width: "160px" }}
+    >
+      <Link to={`/book/${book.id}`} className="text-decoration-none text-dark">
+        <img
+          src={
+            book.image ||
+            "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png"
+          }
+          alt="Book cover"
+          className="card-img-top align-center"
+          style={{
+            height: "200px",
+            width: "auto",
+            display: "block",
+            marginLeft: "auto",
+            marginRight: "auto",
+            borderRadius: "0px",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
+          }}
+        />
+      </Link>
+
+      <div className="card-body px-0">
+        <div className="d-flex justify-content-end">
+   <button
+  className="menu-icon ms-2"
+  onClick={(e) => {
+    lastClickedRef.current = e.target;
+    handleShowMenu(book.id);
+  }}
+  aria-label="Options"
+>
+  <span className="three-dots">⋯</span>
+</button>
+
+
+        </div>
+
+        {showMenu === book.id && (
+          <div
+            ref={popupRefs.current[book.id]}
+            className={`popup-menu2 ${popupDirections[book.id] === "left" ? "align-left-popup" : "align-right-popup"}`}
+          >
+            <div className="popup-header">
+              <h6 className="card-title mb-1">{book.title}</h6>
+              <p className="card-text small text-muted">by {book.author}</p>
             </div>
+            <button className="popup-item" onClick={() => { handleWantToRead(book.id); setShowMenu(null); }}>
+              Add to want to read
+            </button>
+            <button className="popup-item" onClick={() => { handleRate(book.id); setShowMenu(null); }}>
+              Rate
+            </button>
+            <button className="popup-item" onClick={() => { handleUpdateProgress(book.id); setShowMenu(null); }}>
+              Update progress
+            </button>
+            <button className="popup-item" onClick={() => { handleMarkAsRead(book.id); setShowMenu(null); }}>
+              Mark as finished
+            </button>
           </div>
-        ))}
+        )}
       </div>
+    </div>
+  );
+})}
+
+      
+
+</div>
+
+
     </div>
   );
 }

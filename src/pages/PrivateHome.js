@@ -310,35 +310,21 @@ function PrivateHome() {
 
             <div className="row  justify-content-center mt-5">
               <div className="col-md-6 d-flex justify-content-center gap-5">
-
                 <div className="text-center d-flex flex-column align-items-center">
                   <p>Club Progress</p>
                   <CircleMeter
                     value={clubData.averageProgress}
                     className={isLoading ? "" : "loaded"}
                   />
-
-
                 </div>
-
-
-
                 <div className="text-center d-flex flex-column align-items-center">
                   <p>Club Rating</p>
                   <CircleMeter value={clubData.averageRating * 20}
                     className={isLoading ? "" : "loaded"}
                   />
-
-
                 </div>
-
               </div>
             </div>
-
-
-
-
-
           </div>
 
           {/* Rating Popup */}
