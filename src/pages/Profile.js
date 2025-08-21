@@ -173,7 +173,7 @@ function Profile() {
   return (
     <div className="container container-colored mt-5">
       <div>
-        <h2 className="mb-4 text-center">Your account</h2>
+        <h2 className="mb-4 text-center">Profile</h2>
         <div className="p-4 mb-4">
 
           {user ? (

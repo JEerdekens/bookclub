@@ -32,22 +32,22 @@ function BookList() {
 
 
 
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    const popupRef = popupRefs.current[showMenu];
-    const clickedInsidePopup = popupRef?.current?.contains(event.target);
-    const clickedButton = lastClickedRef.current === event.target;
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const popupRef = popupRefs.current[showMenu];
+      const clickedInsidePopup = popupRef?.current?.contains(event.target);
+      const clickedButton = lastClickedRef.current === event.target;
 
-    if (!clickedInsidePopup && !clickedButton) {
-      setShowMenu(null);
-    }
-  };
+      if (!clickedInsidePopup && !clickedButton) {
+        setShowMenu(null);
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, [showMenu]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -172,7 +172,7 @@ useEffect(() => {
         timestamp: new Date()
       });
       setMarkedWantToReadIds(prev => [...prev, bookId]);
-      alert("Added to your Want to Read list!");
+      // alert("Added to your Want to Read list!");
     } else {
       const docId = existingSnap.docs[0].id;
       await deleteDoc(doc(db, "wantToRead", docId));
@@ -208,24 +208,24 @@ useEffect(() => {
     }
   }, [showMenu]);
 
-  
-const handleShowMenu = (bookId) => {
-  setTimeout(() => {
-    setShowMenu(prev => (prev === bookId ? null : bookId));
 
-    const ref = cardRefs.current[bookId];
-    if (ref?.current) {
-      const rect = ref.current.getBoundingClientRect();
-      const screenWidth = window.innerWidth;
-      const direction =
-        rect.left < 150 ? "right" :
-        screenWidth - rect.right < 150 ? "left" :
-        "right";
+  const handleShowMenu = (bookId) => {
+    setTimeout(() => {
+      setShowMenu(prev => (prev === bookId ? null : bookId));
 
-      setPopupDirections(prev => ({ ...prev, [bookId]: direction }));
-    }
-  }, 0); // Let the event bubble finish before toggling
-};
+      const ref = cardRefs.current[bookId];
+      if (ref?.current) {
+        const rect = ref.current.getBoundingClientRect();
+        const screenWidth = window.innerWidth;
+        const direction =
+          rect.left < 150 ? "right" :
+            screenWidth - rect.right < 150 ? "left" :
+              "right";
+
+        setPopupDirections(prev => ({ ...prev, [bookId]: direction }));
+      }
+    }, 0); // Let the event bubble finish before toggling
+  };
 
 
 
@@ -294,90 +294,102 @@ const handleShowMenu = (bookId) => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       )}
-<div className="d-flex flex-wrap gap-4 justify-content-start">
-    {filteredBooks.map(book => {
-  if (!cardRefs.current[book.id]) {
-    cardRefs.current[book.id] = React.createRef();
-  }
-
-  if (!popupRefs.current[book.id]) {
-    popupRefs.current[book.id] = React.createRef();
-  }
-
-  return (
-    <div
-      key={book.id}
-      ref={cardRefs.current[book.id]}
-      className="book-card p-2 position-relative"
-      style={{ width: "160px" }}
-    >
-      <Link to={`/book/${book.id}`} className="text-decoration-none text-dark">
-        <img
-          src={
-            book.image ||
-            "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png"
+      <div className="d-flex flex-wrap gap-4 justify-content-start">
+        {filteredBooks.map(book => {
+          if (!cardRefs.current[book.id]) {
+            cardRefs.current[book.id] = React.createRef();
           }
-          alt="Book cover"
-          className="card-img-top align-center"
-          style={{
-            height: "200px",
-            width: "auto",
-            display: "block",
-            marginLeft: "auto",
-            marginRight: "auto",
-            borderRadius: "0px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
-          }}
-        />
-      </Link>
 
-      <div className="card-body px-0">
-        <div className="d-flex justify-content-end">
-   <button
-  className="menu-icon ms-2"
-  onClick={(e) => {
-    lastClickedRef.current = e.target;
-    handleShowMenu(book.id);
-  }}
-  aria-label="Options"
->
-  <span className="three-dots">⋯</span>
-</button>
+          if (!popupRefs.current[book.id]) {
+            popupRefs.current[book.id] = React.createRef();
+          }
+
+          return (
+            <div
+              key={book.id}
+              ref={cardRefs.current[book.id]}
+              className="book-card p-2 position-relative"
+              style={{ width: "160px" }}
+            >
+              <Link to={`/book/${book.id}`} className="text-decoration-none text-dark">
+                <img
+                  src={
+                    book.image ||
+                    "https://bookstoreromanceday.org/wp-content/uploads/2020/09/book-cover-placeholder.png"
+                  }
+                  alt="Book cover"
+                  className="card-img-top align-center"
+                  style={{
+                    height: "200px",
+                    width: "auto",
+                    display: "block",
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                    borderRadius: "0px",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
+                  }}
+                />
+              </Link>
+
+              <div className="card-body px-0">
+                <div className="d-flex justify-content-end">
+                  <button
+                    className="menu-icon ms-2"
+                    onClick={(e) => {
+                      lastClickedRef.current = e.target;
+                      handleShowMenu(book.id);
+                    }}
+                    aria-label="Options"
+                  >
+                    <span className="three-dots">⋯</span>
+                  </button>
 
 
-        </div>
+                </div>
 
-        {showMenu === book.id && (
-          <div
-            ref={popupRefs.current[book.id]}
-            className={`popup-menu2 ${popupDirections[book.id] === "left" ? "align-left-popup" : "align-right-popup"}`}
-          >
-            <div className="popup-header">
-              <h6 className="card-title mb-1">{book.title}</h6>
-              <p className="card-text small text-muted">by {book.author}</p>
+                {showMenu === book.id && (
+                  <div
+                    ref={popupRefs.current[book.id]}
+                    className={`popup-menu2 ${popupDirections[book.id] === "left" ? "align-left-popup" : "align-right-popup"}`}
+                  >
+                    <div className="popup-header">
+                      <h6 className="card-title mb-1">{book.title}</h6>
+                      <p className="card-text small text-muted">by {book.author}</p>
+                    </div>
+                    <button
+                      className="popup-item"
+                      onClick={async () => {
+                        await handleWantToRead(book.id); // Wait for DB update
+                        setShowMenu(null);
+                        window.location.reload(); // Refresh after it's done
+                      }}
+                    >
+                      {markedWantToReadIds.includes(book.id)
+                        ? "Remove from Want to Read"
+                        : "Add to Want to Read"}
+                    </button>
+
+
+
+                    <button className="popup-item" onClick={() => { handleRate(book.id); setShowMenu(null); }}>
+                      Rate
+                    </button>
+                    <button className="popup-item" onClick={() => { handleUpdateProgress(book.id); setShowMenu(null); }}>
+                      Update progress
+                    </button>
+                    <button className="popup-item" onClick={() => { handleMarkAsRead(book.id); setShowMenu(null); }}>
+                      Mark as finished
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-            <button className="popup-item" onClick={() => { handleWantToRead(book.id); setShowMenu(null); }}>
-              Add to want to read
-            </button>
-            <button className="popup-item" onClick={() => { handleRate(book.id); setShowMenu(null); }}>
-              Rate
-            </button>
-            <button className="popup-item" onClick={() => { handleUpdateProgress(book.id); setShowMenu(null); }}>
-              Update progress
-            </button>
-            <button className="popup-item" onClick={() => { handleMarkAsRead(book.id); setShowMenu(null); }}>
-              Mark as finished
-            </button>
-          </div>
-        )}
+          );
+        })}
+
+
+
       </div>
-    </div>
-  );
-})}
-
-      
-
-</div>
 
 
     </div>
