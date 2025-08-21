@@ -106,16 +106,26 @@ function PrivateHome() {
         setRating(ratingSnap.docs[0].data().rating);
       }
 
-      // 🔍 Fetch all ratings for this book
-      const allRatingsQuery = query(
-        collection(db, "ratings"),
-        where("book", "==", bookRef)
+          // Step 1: Get all users in the book club
+      const usersQuery = query(
+        collection(db, "users"),
+        where("bookclub", "==", clubRef)
       );
-      const allRatingsSnap = await getDocs(allRatingsQuery);
-      const allRatings = allRatingsSnap.docs.map(doc => doc.data().rating);
-      const avgRating = allRatings.length
-        ? allRatings.reduce((a, b) => a + b, 0) / allRatings.length
+      const usersSnap = await getDocs(usersQuery);
+      const userIds = usersSnap.docs.map(doc => doc.ref); // assuming 'user' in ratings is a DocumentReference
+
+      // Step 2: Get all ratings for the book by those users
+      const ratingsQuery = query(
+        collection(db, "ratings"),
+        where("book", "==", bookRef),
+        where("user", "in", userIds)
+      );
+      const ratingsSnap = await getDocs(ratingsQuery);
+      const ratings = ratingsSnap.docs.map(doc => doc.data().rating);
+      const avgRating = ratings.length
+        ? ratings.reduce((a, b) => a + b, 0) / ratings.length
         : null;
+
 
       // 🔍 Fetch all progress entries for this book
       const allProgressQuery = query(
