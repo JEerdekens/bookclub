@@ -461,6 +461,11 @@ h3 {
   padding: 0.2rem 0.5rem;
 }
 
+.three-dots-small {
+  font-size: 1.2rem;
+  padding: 0.2rem 0.5rem;
+}
+
 .popup-menu {
   position: absolute;
   /* top: 2.2rem;
@@ -484,7 +489,7 @@ h3 {
   border-radius: 10px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
   padding: 12px;
-  min-width: 200px;
+  min-width: 245px;
   z-index: 1000;
   font-family: 'Segoe UI', sans-serif;
 }
@@ -633,4 +638,25 @@ html, body {
     right: -5%;
     top: 15rem;
     margin-right: 10px;
+}
+
+/* Vertical alignment */
+.align-down-popup {
+  top: 95%;
+  margin-top: 10px;
+}
+.align-up-popup {
+  top: -10%;
+  margin-bottom: 10px;
+}
+
+.offcanvas {
+  background-color: #fdf6f0;
+  color: #3e2723;
+}
+
+
+.text-bd-primary {
+  --bs-text-opacity: 1;
+  color: #b38349 !important;
 }
