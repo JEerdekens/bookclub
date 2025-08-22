@@ -14,6 +14,7 @@ import {
 import "../App.css";
 import { useParams } from "react-router-dom";
 
+
 function BookPage() {
     const [bookData, setBookData] = useState(null);
     const [comments, setComments] = useState([]);
@@ -138,6 +139,8 @@ function BookPage() {
 
 
 
+
+
     const progressData = await Promise.all(
     progressSnap.docs.map(async doc => {
         const data = doc.data();
@@ -226,6 +229,30 @@ const renderStars = (rating) => {
 
 
 
+
+const dropdownRef = useRef(null);
+
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target)
+    ) {
+      setOpenMenuId(null);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
+const [openMenuId, setOpenMenuId] = useState(null);
+
+const toggleMenu = (id) => {
+  setOpenMenuId((prev) => (prev === id ? null : id));
+};
 
 
     return (
@@ -356,13 +383,16 @@ const renderStars = (rating) => {
 
 
             <div className="mb-4">
-                <h5>Leave a Comment</h5>
+                <h5>Leave a comment</h5>
                 {editingComment && (
                     <div className="alert alert-info">
                         Editing comment by <strong>{editingComment.username}</strong>
                         <button
                             className="btn btn-sm btn-link"
-                            onClick={() => setEditingComment(null)}
+                            onClick={() => {
+                                setEditingComment(null);
+                                setNewComment(""); // 👈 Clears the textbox
+                            }}                      
                         >
                             Cancel
                         </button>
@@ -388,78 +418,93 @@ const renderStars = (rating) => {
                         Contains spoilers
                     </label>
                 </div>
-                <button className="btn btn-sm btn-success" onClick={handleCommentSubmit}>
+                <button className="btn btn-sm btn-bd-primary" onClick={handleCommentSubmit}>
                     {editingComment ? "Update Comment" : "Submit Comment"}
                 </button>
             </div>
 
             <div className="mb-4" ref={commentsRef}>
-                <h5>Comments</h5>
+                
+               <div class="comments-header">
+  <span>Comments</span>
+</div>
+
                 {filteredComments.length > 0 ? (
-                    filteredComments.map((c, idx) => {
-                        const date = c.timestamp?.toDate?.();
-                        const formatted = date ? date.toLocaleString() : "Unknown time";
-                        const isMine = c.user.id === currentUserId;
+  filteredComments.map((c, idx) => {
+    const date = c.timestamp?.toDate?.();
+    const formatted = date ? date.toLocaleString() : "Unknown time";
+    const isMine = c.user.id === currentUserId;
 
-                        return (
-                            <div key={idx} className="border rounded p-2 mb-2">
-                                <div className="d-flex align-items-center mb-2 gap-2">
-                                    <img
-                                        src={
-                                            c.photoBase64?.startsWith("data:image")
+    return (
+      <div key={idx} className="border rounded p-2 mb-2 comment-box position-relative">
+        <div className="d-flex align-items-center mb-2 gap-2">
+          <img
+            src={
+              c.photoBase64?.startsWith("data:image")
+                ? c.photoBase64
+                : c.photoBase64
+                ? `data:image/jpeg;base64,${c.photoBase64}`
+                : "/bookclub/images/default-avatar.png"
+            }
+            alt="User avatar"
+            className="rounded-circle"
+            style={{ width: "40px", height: "40px", objectFit: "cover" }}
+          />
+          <strong>{c.username}</strong>
+        </div>
 
-                                                ? c.photoBase64
-                                                : c.photoBase64
-                                                    ? `data:image/jpeg;base64,${c.photoBase64}`
-                                                    : "/bookclub/images/default-avatar.png"
-                                        }
-                                        alt="User avatar"
-                                        className="rounded-circle"
-                                        style={{ width: "40px", height: "40px", objectFit: "cover" }}
-                                    />
-                                    <strong>{c.username}</strong>
-                                </div>
+        {c.spoiler && !revealedSpoilers.includes(c.id) ? (
+          <div className="spoiler-overlay">
+            <p className="blurred-text">{c.text}</p>
+            <button
+              className="btn btn-sm btn-outline-warning mt-2"
+              onClick={() => handleRevealSpoiler(c.id)}
+            >
+              Show anyway
+            </button>
+          </div>
+        ) : (
+          <p>{c.text}</p>
+        )}
 
-                                {c.spoiler && !revealedSpoilers.includes(c.id) ? (
-                                    <div className="spoiler-overlay">
-                                        <p className="blurred-text">{c.text}</p>
-                                        <button
-                                            className="btn btn-sm btn-outline-warning mt-2"
-                                            onClick={() => handleRevealSpoiler(c.id)}
-                                        >
-                                            Show anyway
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <p>{c.text}</p>
-                                )}
+        <small className="text-muted d-block">
+          {c.spoiler ? "⚠️ Spoiler" : "🗨️ No Spoiler"} • {formatted}
+        </small>
 
-                                <small className="text-muted d-block">
-                                    {c.spoiler ? "⚠️ Spoiler" : "🗨️ No Spoiler"} • {formatted}
-                                </small>
+        {isMine && (
+  <div className="comment-menu">
+    <span
+      className="three-dots-small"
+      onClick={() => toggleMenu(c.id)}
+      title="Options"
+    >
+      ⋯
+    </span>
+   {openMenuId === c.id && (
+  <div ref={dropdownRef} className="dropdown-menu show p-2 shadow-sm">
+    <button className="dropdown-item" onClick={() => handleEditComment(c)}>
+      Edit
+    </button>
+    <button
+      className="dropdown-item text-danger"
+      onClick={() => handleDeleteComment(c)}
+    >
+      Delete
+    </button>
+  </div>
+)}
 
-                                {isMine && (
-                                    <div className="mt-2">
-                                        <button
-                                            className="btn btn-sm btn-outline-secondary me-2"
-                                            onClick={() => handleEditComment(c)}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-outline-danger"
-                                            onClick={() => handleDeleteComment(c)}
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })
-                ) : (
-                    <p>No comments yet.</p>
-                )}
+  </div>
+)}
+
+
+      </div>
+    );
+  })
+) : (
+  <p>No comments yet.</p>
+)}
+
             </div>
 
            
