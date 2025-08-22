@@ -328,6 +328,10 @@ footer {
   position: relative;
 }
 
+.mt-4-5 {
+  margin-top: 1.75rem; /* halfway between mt-4 (1.5rem) and mt-5 (3rem) */
+}
+
 
 body {
   background-color: #f8f3ed !important;
@@ -350,7 +354,7 @@ h3 {
 .container-bookshelf {
   background: url('../public/images/Bookshelf.png') no-repeat center center;
   background-size: contain;
-  padding: 3rem 1rem 0rem; /* extra bottom padding to show shelf */
+  padding: 3rem 1rem 6rem; /* extra bottom padding to show shelf */
   border-radius: 10px;
 /*  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);*/
   display: flex;
@@ -721,3 +725,7 @@ h5 {
   z-index: 1050;
 }
 
+.text-bd-secondary {
+  --bs-text-opacity: 1;
+  color: #746d67 !important;
+}

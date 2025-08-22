@@ -81,6 +81,7 @@ function BottomNavbar({ user }) {
             <FaBook />
             <span>Books</span>
           </Link>
+          
          <Link to="/profile" className={`nav-icon ${isActive("/profile") ? "active" : ""}`}>
   <div className="position-relative d-inline-block">
     <FaUser />
@@ -93,6 +94,7 @@ function BottomNavbar({ user }) {
   </div>
   <span>Profile</span>
 </Link>
+
 
         </>
       ) : (

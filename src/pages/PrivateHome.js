@@ -15,6 +15,8 @@ import {
 import { Link } from "react-router-dom";
 import CircleMeter from "../components/CircleMeter";
 
+import { useNavigate } from "react-router-dom";
+
 
 
 
@@ -26,7 +28,7 @@ function PrivateHome() {
   const [rating, setRating] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
+  const navigate = useNavigate();
 
   const [showProgressForm, setShowProgressForm] = useState(false);
   const [inputType, setInputType] = useState("percent");
@@ -45,8 +47,6 @@ function PrivateHome() {
     window.addEventListener('resize', setVh);
     return () => window.removeEventListener('resize', setVh);
   }, []);
-
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,7 +106,7 @@ function PrivateHome() {
         setRating(ratingSnap.docs[0].data().rating);
       }
 
-          // Step 1: Get all users in the book club
+      // Step 1: Get all users in the book club
       const usersQuery = query(
         collection(db, "users"),
         where("bookclub", "==", clubRef)
@@ -200,84 +200,95 @@ function PrivateHome() {
   };
 
   const handleRatingSubmit = async (value) => {
-  const uid = auth.currentUser?.uid;
-  if (!uid || !bookData || !value) return;
+    const uid = auth.currentUser?.uid;
+    if (!uid || !bookData || !value) return;
 
-  const ratingValue = parseFloat(value);
-  if (ratingValue < 0.5 || ratingValue > 5) return;
+    const ratingValue = parseFloat(value);
+    if (ratingValue < 0.5 || ratingValue > 5) return;
 
-  try {
-    const ratingQuery = query(
-      collection(db, "ratings"),
-      where("user", "==", doc(db, "users", uid)),
-      where("book", "==", doc(db, "books", bookData.id))
-    );
-    const ratingSnap = await getDocs(ratingQuery);
+    try {
+      const ratingQuery = query(
+        collection(db, "ratings"),
+        where("user", "==", doc(db, "users", uid)),
+        where("book", "==", doc(db, "books", bookData.id))
+      );
+      const ratingSnap = await getDocs(ratingQuery);
 
-    if (!ratingSnap.empty) {
-      await updateDoc(ratingSnap.docs[0].ref, { rating: ratingValue });
-    } else {
-      await addDoc(collection(db, "ratings"), {
-        user: doc(db, "users", uid),
-        book: doc(db, "books", bookData.id),
-        rating: ratingValue
-      });
-    }
+      if (!ratingSnap.empty) {
+        await updateDoc(ratingSnap.docs[0].ref, { rating: ratingValue });
+      } else {
+        await addDoc(collection(db, "ratings"), {
+          user: doc(db, "users", uid),
+          book: doc(db, "books", bookData.id),
+          rating: ratingValue
+        });
+      }
 
-    setRating(ratingValue);
-    setNewRating(0);
-  } catch (error) {
-    console.error("Error submitting rating:", error);
-  }
-};
-
-
-  const StarRating = ({ rating, onChange, handleRatingSubmit }) => {
-  const handleClick = (value) => {
-    onChange(value); // update local state
-    if (handleRatingSubmit) {
-      handleRatingSubmit(value); // save to DB immediately
+      setRating(ratingValue);
+      setNewRating(0);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
     }
   };
 
-  const stars = [];
-  for (let i = 1; i <= 5; i++) {
-    const full = i <= rating;
-    const half = i - 0.5 === rating;
 
-    stars.push(
-      <span
-        key={i}
-        style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
-        onClick={() => handleClick(i)}
-      >
-        {full ? "★" : "☆"}
-      </span>
-    );
+  const StarRating = ({ rating, onChange, handleRatingSubmit }) => {
+    const handleClick = (value) => {
+      onChange(value); // update local state
+      if (handleRatingSubmit) {
+        handleRatingSubmit(value); // save to DB immediately
+      }
+    };
 
-    stars.push(
-      <span
-        key={`half-${i}`}
-        style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
-        onClick={() => handleClick(i - 0.5)}
-      >
-        {rating >= i - 0.5 && rating < i ? "⯨" : ""}
-      </span>
-    );
-  }
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      const full = i <= rating;
+      const half = i - 0.5 === rating;
 
-  return <div className="star-rating">{stars}</div>;
-};
+      stars.push(
+        <span
+          key={i}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
+          onClick={() => handleClick(i)}
+        >
+          {full ? "★" : "☆"}
+        </span>
+      );
+
+      stars.push(
+        <span
+          key={`half-${i}`}
+          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
+          onClick={() => handleClick(i - 0.5)}
+        >
+          {rating >= i - 0.5 && rating < i ? "⯨" : ""}
+        </span>
+      );
+    }
+
+    return <div className="star-rating">{stars}</div>;
+  };
 
 
   const MemoizedMeter = React.memo(({ value }) => <CircleMeter value={value} />);
+
+  console.log("userData:", userData);
+  console.log("clubData:", clubData);
+  console.log("userData.bookclub?.id:", userData?.bookclub?.id);
+  console.log("clubData.creator?.id:", clubData?.creator?.id);
+  console.log(
+    "Is creator?",
+    userData?.bookclub?.id === clubData?.creator?.id
+  );
+
 
 
 
   return (
     <div className="container py-5">
       <div className="text-center">
-        <h2><strong>Currently Reading</strong></h2>
+        {clubData?.name || "Your Book Club"} is
+        <h2 class="mt-1">Currently Reading</h2>
       </div>
 
       <div className="text-center mb-4">
@@ -294,7 +305,7 @@ function PrivateHome() {
               </Link>
             </div>
 
-            <div className="book-header d-flex align-items-center justify-content-between position-relative mb-3 mt-5">
+            <div className="book-header d-flex align-items-center justify-content-between position-relative mb-3 mt-4-5">
               {/* Progress on the left */}
               <div className="progress-display align-self-center">{progress !== null ? `${progress}%` : "0%"}</div>
 
@@ -323,36 +334,94 @@ function PrivateHome() {
             <p className="rating-prompt mb-0">
               {rating ? "Your rating:" : "Rate this book:"}
             </p>
-         <StarRating
-  rating={newRating || rating || 0}
-  onChange={setNewRating}
-  handleRatingSubmit={handleRatingSubmit}
-/>
+            <StarRating
+              rating={newRating || rating || 0}
+              onChange={setNewRating}
+              handleRatingSubmit={handleRatingSubmit}
+            />
 
+            <div class="d-flex justify-content-center align-items-center gap-4 fs-3 mt-4-5 mb-2">
+              <button type="button" class="btn btn-link fs-3 text-bd-secondary" data-bs-toggle="modal" data-bs-target="#statsModal" title="View Statistics">
+                <i class="bi bi-bar-chart-fill"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-link fs-3 text-bd-secondary"
+                data-bs-toggle="modal"
+                data-bs-target="#calendarModal"
+                title="Next Book Club"
+              >
+                <i class="bi bi-calendar3"></i>
+              </button>
+            </div>
+          </div>
 
-
-
-
-
-
-            <div className="row  justify-content-center mt-5">
-              <div className="col-md-6 d-flex justify-content-center gap-5">
-                <div className="text-center d-flex flex-column align-items-center">
-                  <p>Club Progress</p>
-                  <CircleMeter
-                    value={clubData.averageProgress}
-                    className={isLoading ? "" : "loaded"}
-                  />
+          <div class="modal fade" id="statsModal" tabindex="-1" aria-labelledby="statsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="statsModalLabel">Club Statistics</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div className="text-center d-flex flex-column align-items-center">
-                  <p>Club Rating</p>
-                  <CircleMeter value={clubData.averageRating * 20}
-                    className={isLoading ? "" : "loaded"}
-                  />
+                <div class="modal-body">
+                  <div class="d-flex flex-column align-items-center mb-4">
+                    <p>Average Progress</p>
+                    <div class="d-flex justify-content-center">
+                      <CircleMeter
+                        value={clubData.averageProgress}
+                        className={isLoading ? "" : "loaded"}
+                      />
+                    </div>
+                  </div>
+
+                  <div class="d-flex flex-column align-items-center">
+                    <p>Average Rating</p>
+                    <div class="d-flex justify-content-center">
+                      <CircleMeter
+                        value={clubData.averageRating * 20}
+                        className={isLoading ? "" : "loaded"}
+                      />
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
           </div>
+
+          <div class="modal fade" id="calendarModal" tabindex="-1" aria-labelledby="calendarModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="calendarModalLabel">Next Book Club</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                  <p><strong>Date:</strong> 28 August 2025</p>
+                  <p><strong>Time:</strong> 19:00 CET</p>
+                  <p><strong>Location:</strong> Online via Zoom</p>
+                  <hr />
+                  <p>
+                    <strong>Days Until:</strong>
+                    <span id="daysUntil"></span>
+                  </p>
+
+                  {auth.currentUser?.uid === clubData?.creator?.id && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary mt-3"
+                      onClick={() => navigate("/schedule-bookclub")} data-bs-dismiss="modal"
+                    >
+                      <i className="bi bi-calendar-plus"></i> Schedule Next Book Club
+                    </button>
+                  )}
+
+
+                </div>
+              </div>
+            </div>
+          </div>
+
 
           {/* Rating Popup */}
           {showRatingForm && (
@@ -361,22 +430,22 @@ function PrivateHome() {
                 <label>Give a rating (0–5):</label>
                 <StarRating rating={newRating} onChange={setNewRating} />
                 <div className="mt-2">
-<button
-  className="btn btn-sm btn-bd-primary me-2"
-  onClick={() => {
-    handleRatingSubmit(newRating);
-    setShowRatingForm(false);
-  }}
->
-  Submit
-</button>
-
-
+                  <button
+                    className="btn btn-sm btn-bd-primary me-2"
+                    onClick={() => {
+                      handleRatingSubmit(newRating);
+                      setShowRatingForm(false);
+                    }}
+                  >
+                    Submit
+                  </button>
                   <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>Cancel</button>
                 </div>
               </div>
             </div>
           )}
+
+
 
           {/* Progress Popup */}
           {showProgressForm && (

@@ -13,6 +13,7 @@ import Profile from "../pages/Profile";
 import ChooseUsername from "../pages/ChooseUsername";
 import PrivateRoute from "./PrivateRoute";
 import BookPage from "../pages/BookPage";
+import ScheduleBookClub from "../pages/ScheduleBookclub";
 
 function AppWrapper() {
   const [user, setUser] = useState(null);
@@ -77,6 +78,14 @@ function AppWrapper() {
     element={
       <PrivateRoute user={user}>
         <BookList />
+      </PrivateRoute>
+    }
+  />
+    <Route
+    path="/schedule-bookclub"
+    element={
+      <PrivateRoute user={user}>
+        <ScheduleBookClub />
       </PrivateRoute>
     }
   />
