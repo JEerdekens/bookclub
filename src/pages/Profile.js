@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+
 import { auth, db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import "../App.css";
 import {
   EmailAuthProvider,
@@ -9,6 +11,9 @@ import {
   updatePassword
 } from "firebase/auth";
 import imageCompression from "browser-image-compression";
+import 'bootstrap/dist/js/bootstrap.bundle.min';
+
+
 
 
 function Profile() {
@@ -18,6 +23,9 @@ function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [oldPassword, setOldPassword] = useState("");
+  const [notifications, setNotifications] = useState([]);
+  const [hasUnread, setHasUnread] = useState(false);
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -169,11 +177,123 @@ function Profile() {
 
 
 
+const fetchNotifications = async () => {
+  if (!user) {
+    console.warn("No user found. Skipping notification fetch.");
+    return;
+  }
+
+  console.log("Fetching notifications for user:", user.uid);
+
+  const userRef = doc(db, "users", user.uid);
+const q = query(
+  collection(db, "notifications"),
+  where("user", "==", userRef)
+);
+
+
+  try {
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    console.log("Fetched notifications:", data);
+
+    setNotifications(data);
+    const unread = data.some(n => !n.isRead);
+    console.log("Has unread notifications:", unread);
+    setHasUnread(unread);
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+  }
+};
+
+useEffect(() => {
+  if (user) {
+    fetchNotifications();
+  }
+}, [user]);
+
+
+
+const markAsRead = async (id) => {
+  console.log("Marking notification as read:", id);
+
+  try {
+    await updateDoc(doc(db, "notifications", id), { isRead: true });
+    console.log("Notification marked as read.");
+    fetchNotifications(); // refresh
+  } catch (err) {
+    console.error("Error marking notification as read:", err);
+  }
+};
+
+
+
+
 
   return (
+
+
     <div className="container container-colored mt-5">
+      
       <div>
-        <h2 className="mb-4 text-center">Profile</h2>
+<div className="d-flex justify-content-between align-items-center mb-4 ms-3">
+  <h2 className="w-100">Profile</h2>
+
+  <div className="dropdown ms-2">
+   
+    <button
+      className="btn position-relative "
+      type="button"
+      id="notificationDropdown"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      <i className="bi bi-bell fs-4"></i>
+      {hasUnread && (
+        <span className="position-absolute top-2 start-70  translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+      )}
+    </button>
+
+<ul
+  className="dropdown-menu"
+  aria-labelledby="notificationDropdown"
+  style={{ maxHeight: '300px', overflowY: 'auto' }}
+>
+  {notifications.length === 0 ? (
+    <li><span className="dropdown-item text-muted">No notifications</span></li>
+  ) : (
+    notifications
+      .slice(0, 10) // Show only the first 10 (assuming newest are first)
+      .map(n => (
+        <li key={n.id}>
+          <div
+            className={`dropdown-item ${n.isRead ? '' : 'fw-bold'}`}
+            onClick={() => markAsRead(n.id)}
+            style={{ cursor: "pointer" }}
+          >
+            <div>{n.message}</div>
+            <small className="text-muted">
+              {n.timestamp?.toDate().toLocaleString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </small>
+          </div>
+        </li>
+      ))
+  )}
+</ul>
+
+
+  </div>
+</div>
+
+
+
         <div className="p-4 mb-4">
 
           {user ? (
