@@ -199,65 +199,76 @@ function PrivateHome() {
     }
   };
 
-  const handleRatingSubmit = async () => {
-    const uid = auth.currentUser?.uid;
-    if (!uid || !bookData || !newRating) return;
+  const handleRatingSubmit = async (value) => {
+  const uid = auth.currentUser?.uid;
+  if (!uid || !bookData || !value) return;
 
-    const ratingValue = parseFloat(newRating);
-    if (ratingValue < 0.5 || ratingValue > 5) return;
+  const ratingValue = parseFloat(value);
+  if (ratingValue < 0.5 || ratingValue > 5) return;
 
-    try {
-      const ratingQuery = query(
-        collection(db, "ratings"),
-        where("user", "==", doc(db, "users", uid)),
-        where("book", "==", doc(db, "books", bookData.id))
-      );
-      const ratingSnap = await getDocs(ratingQuery);
+  try {
+    const ratingQuery = query(
+      collection(db, "ratings"),
+      where("user", "==", doc(db, "users", uid)),
+      where("book", "==", doc(db, "books", bookData.id))
+    );
+    const ratingSnap = await getDocs(ratingQuery);
 
-      if (!ratingSnap.empty) {
-        await updateDoc(ratingSnap.docs[0].ref, { rating: ratingValue });
-      } else {
-        await addDoc(collection(db, "ratings"), {
-          user: doc(db, "users", uid),
-          book: doc(db, "books", bookData.id),
-          rating: ratingValue
-        });
-      }
+    if (!ratingSnap.empty) {
+      await updateDoc(ratingSnap.docs[0].ref, { rating: ratingValue });
+    } else {
+      await addDoc(collection(db, "ratings"), {
+        user: doc(db, "users", uid),
+        book: doc(db, "books", bookData.id),
+        rating: ratingValue
+      });
+    }
 
-      setRating(ratingValue);
-      setShowRatingForm(false);
-      setNewRating(0);
-    } catch (error) {
-      console.error("Error submitting rating:", error);
+    setRating(ratingValue);
+    setNewRating(0);
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+  }
+};
+
+
+  const StarRating = ({ rating, onChange, handleRatingSubmit }) => {
+  const handleClick = (value) => {
+    onChange(value); // update local state
+    if (handleRatingSubmit) {
+      handleRatingSubmit(value); // save to DB immediately
     }
   };
 
-  const StarRating = ({ rating, onChange }) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      const full = i <= rating;
-      const half = i - 0.5 === rating;
-      stars.push(
-        <span
-          key={i}
-          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
-          onClick={() => onChange(i)}
-        >
-          {full ? "★" : "☆"}
-        </span>
-      );
-      stars.push(
-        <span
-          key={`half-${i}`}
-          style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
-          onClick={() => onChange(i - 0.5)}
-        >
-          {rating >= i - 0.5 && rating < i ? "⯨" : ""}
-        </span>
-      );
-    }
-    return <div className="star-rating">{stars}</div>;
-  };
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    const full = i <= rating;
+    const half = i - 0.5 === rating;
+
+    stars.push(
+      <span
+        key={i}
+        style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
+        onClick={() => handleClick(i)}
+      >
+        {full ? "★" : "☆"}
+      </span>
+    );
+
+    stars.push(
+      <span
+        key={`half-${i}`}
+        style={{ cursor: "pointer", fontSize: "1.5rem", color: "#b38349" }}
+        onClick={() => handleClick(i - 0.5)}
+      >
+        {rating >= i - 0.5 && rating < i ? "⯨" : ""}
+      </span>
+    );
+  }
+
+  return <div className="star-rating">{stars}</div>;
+};
+
 
   const MemoizedMeter = React.memo(({ value }) => <CircleMeter value={value} />);
 
@@ -312,7 +323,13 @@ function PrivateHome() {
             <p className="rating-prompt mb-0">
               {rating ? "Your rating:" : "Rate this book:"}
             </p>
-            <StarRating rating={newRating || rating || 0} onChange={setNewRating} />
+         <StarRating
+  rating={newRating || rating || 0}
+  onChange={setNewRating}
+  handleRatingSubmit={handleRatingSubmit}
+/>
+
+
 
 
 
@@ -344,7 +361,17 @@ function PrivateHome() {
                 <label>Give a rating (0–5):</label>
                 <StarRating rating={newRating} onChange={setNewRating} />
                 <div className="mt-2">
-                  <button className="btn btn-sm btn-bd-primary me-2" onClick={handleRatingSubmit}>Submit</button>
+<button
+  className="btn btn-sm btn-bd-primary me-2"
+  onClick={() => {
+    handleRatingSubmit(newRating);
+    setShowRatingForm(false);
+  }}
+>
+  Submit
+</button>
+
+
                   <button className="btn btn-sm btn-secondary" onClick={() => setShowRatingForm(false)}>Cancel</button>
                 </div>
               </div>
